@@ -4,10 +4,16 @@ const bodyParser = require("body-parser");
 const app = express();
 app.use(bodyParser.json());
 
-const FULL_NAME = "john_doe"; 
-const DOB = "17091999";
-const EMAIL = "john@xyz.com";
-const ROLL_NUMBER = "ABCD123";
+app.get("/", (req, res) => {
+  res.send("API is running. Use POST /bfhl with JSON data.");
+});
+
+
+const FULL_NAME = process.env.FULL_NAME || "john_doe";
+const DOB = process.env.DOB || "17091999";
+const EMAIL = process.env.EMAIL || "john@xyz.com";
+const ROLL_NUMBER = process.env.ROLL_NUMBER || "ABCD123";
+
 
 function isNumeric(str) {
   return /^\d+$/.test(str);
@@ -16,7 +22,6 @@ function isNumeric(str) {
 function alternatingCaps(str) {
   let res = "";
   let upper = true;
-
   for (let i = str.length - 1; i >= 0; i--) {
     if (/[a-zA-Z]/.test(str[i])) {
       res += upper ? str[i].toUpperCase() : str[i].toLowerCase();
@@ -26,9 +31,17 @@ function alternatingCaps(str) {
   return res;
 }
 
+
 app.post("/bfhl", (req, res) => {
   try {
     const { data } = req.body;
+
+    if (!Array.isArray(data)) {
+      return res.status(400).json({
+        is_success: false,
+        message: "Invalid input: data must be an array",
+      });
+    }
 
     let evenNumbers = [];
     let oddNumbers = [];
@@ -39,11 +52,8 @@ app.post("/bfhl", (req, res) => {
     data.forEach((item) => {
       if (isNumeric(item)) {
         let num = parseInt(item);
-        if (num % 2 === 0) {
-          evenNumbers.push(item);
-        } else {
-          oddNumbers.push(item);
-        }
+        if (num % 2 === 0) evenNumbers.push(item);
+        else oddNumbers.push(item);
         sum += num;
       } else if (/^[a-zA-Z]+$/.test(item)) {
         alphabets.push(item.toUpperCase());
@@ -67,6 +77,7 @@ app.post("/bfhl", (req, res) => {
       concat_string: concatString,
     });
   } catch (error) {
+    console.error("Error processing /bfhl request:", error);
     res.status(500).json({
       is_success: false,
       message: "Something went wrong",
@@ -74,7 +85,8 @@ app.post("/bfhl", (req, res) => {
   }
 });
 
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(` Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
